@@ -1,1 +1,61 @@
-{"nbformat":4,"nbformat_minor":0,"metadata":{"colab":{"provenance":[],"mount_file_id":"1foaUdzwvfUsAZGzx3oswNgfD7-wQRYE2","authorship_tag":"ABX9TyO50Usf7M0CSsKxixkMjQQZ"},"kernelspec":{"name":"python3","display_name":"Python 3"},"language_info":{"name":"python"}},"cells":[{"cell_type":"code","source":["%%writefile app.py\n","import streamlit as st\n","import pandas as pd\n","import joblib\n","\n","st.title(\" Titanic Survival Prediction App\")\n","st.write(\"Fill the information below to predict survival probability.\")\n","\n","# Load model & scaler\n","model = joblib.load(\"titanic_model.pkl\")\n","scaler = joblib.load(\"titanic_scaler.pkl\")\n","\n","# User inputs\n","Pclass = st.selectbox(\"Passenger Class\", [1, 2, 3])\n","Sex = st.selectbox(\"Sex\", [\"male\", \"female\"])\n","Age = st.slider(\"Age\", 1, 90, 30)\n","SibSp = st.number_input(\"Siblings/Spouses Aboard\", 0, 10, 0)\n","Parch = st.number_input(\"Parents/Children Aboard\", 0, 10, 0)\n","Fare = st.number_input(\"Fare\", 0.0, 600.0, 50.0)\n","Embarked = st.selectbox(\"Port of Embarkation\", [\"C\", \"Q\", \"S\"])\n","\n","# Form dataframe\n","data = pd.DataFrame({\n","\"Pclass\":[Pclass],\n","\"Sex\":[Sex],\n","\"Age\":[Age],\n","\"SibSp\":[SibSp],\n","\"Parch\":[Parch],\n","\"Fare\":[Fare],\n","\"Embarked\":[Embarked]\n","})\n","\n","# One hot encoding\n","data = pd.get_dummies(data, drop_first=True)\n","\n","# Required columns (same as model training)\n","required_cols = ['Pclass','Age','SibSp','Parch','Fare',\n","'Sex_male','Embarked_Q','Embarked_S']\n","\n","# Add missing columns\n","for col in required_cols:\n","    if col not in data.columns:\n","        data[col] = 0\n","\n","data = data[required_cols]\n","\n","# Scaling\n","data_scaled = scaler.transform(data)\n","\n","# Prediction\n","pred = model.predict(data_scaled)[0]\n","prob = model.predict_proba(data_scaled)[0][1]\n","\n","st.write(\"###Prediction Result:\")\n","st.write(\" Survived\" if pred == 1 else \" Did Not Survive\")\n","\n","st.write(\"###Survival Probability:\")\n","st.write(f\"**{prob:.3f}**\")"],"metadata":{"colab":{"base_uri":"https://localhost:8080/"},"id":"nxhv4il8gpE_","executionInfo":{"status":"ok","timestamp":1765892211119,"user_tz":-330,"elapsed":24,"user":{"displayName":"Pranav","userId":"06820756394112995730"}},"outputId":"1950c6a2-22f1-4005-b33e-a582f01101f2"},"execution_count":1,"outputs":[{"output_type":"stream","name":"stdout","text":["Writing app.py\n"]}]},{"cell_type":"code","source":["from google.colab import drive\n","drive.mount('/content/drive')"],"metadata":{"id":"2syUhXCVwJ-N"},"execution_count":null,"outputs":[]}]}
+import streamlit as st
+import pandas as pd
+import joblib
+
+# App title
+st.title("Titanic Survival Prediction App")
+st.write("Fill the information below to predict survival probability.")
+
+# Load model and scaler
+model = joblib.load("titanic_model.pkl")
+scaler = joblib.load("titanic_scaler.pkl")
+
+# User inputs
+Pclass = st.selectbox("Passenger Class", [1, 2, 3])
+Sex = st.selectbox("Sex", ["male", "female"])
+Age = st.slider("Age", 1, 90, 30)
+SibSp = st.number_input("Siblings/Spouses Aboard", 0, 10, 0)
+Parch = st.number_input("Parents/Children Aboard", 0, 10, 0)
+Fare = st.number_input("Fare", 0.0, 600.0, 50.0)
+Embarked = st.selectbox("Port of Embarkation", ["C", "Q", "S"])
+
+# Create dataframe
+data = pd.DataFrame({
+    "Pclass": [Pclass],
+    "Sex": [Sex],
+    "Age": [Age],
+    "SibSp": [SibSp],
+    "Parch": [Parch],
+    "Fare": [Fare],
+    "Embarked": [Embarked]
+})
+
+# One-hot encoding
+data = pd.get_dummies(data, drop_first=True)
+
+# Required columns (same as training)
+required_cols = [
+    'Pclass', 'Age', 'SibSp', 'Parch', 'Fare',
+    'Sex_male', 'Embarked_Q', 'Embarked_S'
+]
+
+# Add missing columns
+for col in required_cols:
+    if col not in data.columns:
+        data[col] = 0
+
+data = data[required_cols]
+
+# Scale input
+data_scaled = scaler.transform(data)
+
+# Prediction
+prediction = model.predict(data_scaled)[0]
+probability = model.predict_proba(data_scaled)[0][1]
+
+# Output
+st.subheader("Prediction Result")
+st.write("Survived ✅" if prediction == 1 else "Did Not Survive ❌")
+
+st.subheader("Survival Probability")
+st.write(f"{probability:.3f}")
